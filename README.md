@@ -77,6 +77,15 @@ Then open your web browser and navigate to: http://localhost:8080
 5. Try to guess the number in as few attempts as possible
 6. View your game statistics at the bottom of the page
 
+<img width="1440" alt="Image5" src="https://github.com/user-attachments/assets/70839271-6239-4e3f-b63d-b7be506319bd" />
+<img width="1440" alt="Image4" src="https://github.com/user-attachments/assets/56b1a35d-974c-475e-8259-49af5a9cffda" />
+<img width="1440" alt="Image3" src="https://github.com/user-attachments/assets/a603a213-bda9-4167-b5a1-1ad51eead56f" />
+<img width="1440" alt="Image2" src="https://github.com/user-attachments/assets/298db62d-d9a9-42de-9b39-2bedc4c5b072" />
+<img width="1440" alt="Image1" src="https://github.com/user-attachments/assets/71257b9a-2c5d-48d2-a00b-06d28acd2dac" />
+
+
+
+
 ## Project Structure
 
 - `src/` - C++ source files
@@ -98,3 +107,7 @@ This project is open source, free to use and modify.
 - If you see 'File not found' errors, make sure the server is running from the correct directory.
 - If the server fails to start, ensure port 8080 is not already in use by another application.
 - For database issues, check that SQLite is properly installed and accessible. 
+
+
+
+
