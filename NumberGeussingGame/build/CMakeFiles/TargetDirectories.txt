@@ -1,0 +1,3 @@
+/Users/anaszaman/Downloads/test/build/CMakeFiles/NumberGuessingGame.dir
+/Users/anaszaman/Downloads/test/build/CMakeFiles/edit_cache.dir
+/Users/anaszaman/Downloads/test/build/CMakeFiles/rebuild_cache.dir

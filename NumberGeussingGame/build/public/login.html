@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Number Guessing Game</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Number Guessing Game</h1>
+        
+        <div class="auth-panel">
+            <h2>Login</h2>
+            
+            <div id="login-error" class="error-message hidden"></div>
+            
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn">Login</button>
+                </div>
+            </form>
+            
+            <p class="auth-switch">
+                Don't have an account? <a href="/signup.html">Sign up</a>
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Simple client-side validation
+            if (!username || !password) {
+                showError('Please enter both username and password');
+                return;
+            }
+            
+            // Send login request
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Store user info in session storage
+                    sessionStorage.setItem('user_id', data.user_id);
+                    sessionStorage.setItem('username', username);
+                    
+                    // Redirect to game page
+                    window.location.href = '/index.html';
+                } else {
+                    showError(data.message || 'Login failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('An error occurred during login. Please try again.');
+            });
+        });
+        
+        function showError(message) {
+            const errorElement = document.getElementById('login-error');
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html> 

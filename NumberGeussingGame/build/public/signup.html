@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Number Guessing Game</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Number Guessing Game</h1>
+        
+        <div class="auth-panel">
+            <h2>Create Account</h2>
+            
+            <div id="signup-error" class="error-message hidden"></div>
+            
+            <form id="signup-form" class="auth-form">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password:</label>
+                    <input type="password" id="confirm-password" name="confirm-password" required>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn">Sign Up</button>
+                </div>
+            </form>
+            
+            <p class="auth-switch">
+                Already have an account? <a href="/login.html">Login</a>
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('signup-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            // Simple client-side validation
+            if (!username || !password || !confirmPassword) {
+                showError('Please fill in all fields');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+            
+            // Send signup request
+            fetch('/api/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Store user info in session storage
+                    sessionStorage.setItem('user_id', data.user_id);
+                    sessionStorage.setItem('username', username);
+                    
+                    // Redirect to game page
+                    window.location.href = '/index.html';
+                } else {
+                    showError(data.message || 'Signup failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('An error occurred during signup. Please try again.');
+            });
+        });
+        
+        function showError(message) {
+            const errorElement = document.getElementById('signup-error');
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html> 

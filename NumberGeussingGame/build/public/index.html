@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Guessing Game</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="game-header">
+            <h1>Number Guessing Game</h1>
+            <div id="user-info" class="user-info hidden">
+                <span>Welcome, <span id="username-display"></span>!</span>
+                <button id="logout-btn" class="btn-small">Logout</button>
+            </div>
+        </header>
+        
+        <div id="game-setup" class="game-panel">
+            <h2>Start a New Game</h2>
+            <p>Choose difficulty level:</p>
+            <div class="button-group">
+                <button id="easy-btn" class="btn" data-difficulty="easy">Easy (1-50)</button>
+                <button id="medium-btn" class="btn" data-difficulty="medium">Medium (1-100)</button>
+                <button id="hard-btn" class="btn" data-difficulty="hard">Hard (1-200)</button>
+            </div>
+        </div>
+        
+        <div id="game-play" class="game-panel hidden">
+            <h2>Guess the Number</h2>
+            <p id="game-range">I'm thinking of a number between <span id="min-range">1</span> and <span id="max-range">100</span>.</p>
+            <p id="attempts-display">Attempts: <span id="attempts-count">0</span></p>
+            
+            <div class="input-group">
+                <input type="number" id="guess-input" placeholder="Enter your guess">
+                <button id="guess-btn" class="btn">Guess</button>
+            </div>
+            
+            <p id="result-message" class="message"></p>
+            
+            <div class="button-group">
+                <button id="give-up-btn" class="btn btn-danger">Give Up</button>
+                <button id="new-game-btn" class="btn btn-secondary">New Game</button>
+            </div>
+        </div>
+        
+        <div id="game-over" class="game-panel hidden" style="z-index: 100;">
+            <h2 id="game-result" style="color: #e74c3c; font-size: 28px;">Game Over</h2>
+            <p id="final-message" style="font-size: 18px; margin: 15px 0;"></p>
+            <p id="target-reveal" style="font-size: 22px; font-weight: bold; margin: 15px 0;"></p>
+            <p id="attempts-summary" style="font-size: 18px; margin: 15px 0;"></p>
+            
+            <button id="play-again-btn" class="btn" style="margin-top: 20px; font-size: 18px;">Back to Dashboard</button>
+        </div>
+        
+        <div class="stats-container">
+            <div id="stats-panel" class="stats-panel">
+                <h2>Your Statistics</h2>
+                <div id="stats-loading">Loading stats...</div>
+                <div id="stats-content" class="hidden">
+                    <p>Total Games: <span id="total-games">0</span></p>
+                    <p>Wins: <span id="wins">0</span></p>
+                    <p>Best Score: <span id="best-score">-</span></p>
+                    <p>Average Attempts: <span id="avg-attempts">-</span></p>
+                </div>
+            </div>
+            
+            <div id="leaderboard-panel" class="stats-panel">
+                <h2>Leaderboard</h2>
+                <div id="leaderboard-loading">Loading leaderboard...</div>
+                <div id="leaderboard-content" class="hidden">
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Player</th>
+                                <th>Best Score</th>
+                                <th>Games</th>
+                                <th>Wins</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body">
+                            <!-- Leaderboard entries will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Check if user is logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            const userId = sessionStorage.getItem('user_id');
+            const username = sessionStorage.getItem('username');
+            
+            if (!userId || !username) {
+                // Redirect to login page if not logged in
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            // Display user info
+            document.getElementById('username-display').textContent = username;
+            document.getElementById('user-info').classList.remove('hidden');
+            
+            // Load user stats
+            loadUserStats();
+            
+            // Load leaderboard
+            loadLeaderboard();
+            
+            // Add global error handler
+            window.onerror = function(message, source, lineno, colno, error) {
+                console.error('Global error:', message, 'at', source, lineno, colno);
+                console.error('Error object:', error);
+                alert('An error occurred! Check the console for details.');
+                return false;
+            };
+        });
+        
+        // Game state variables
+        let gameId = null;
+        let userId = parseInt(sessionStorage.getItem('user_id'), 10);
+        let minRange = 1;
+        let maxRange = 100;
+        let attempts = 0;
+        
+        // DOM Elements
+        const gameSetupPanel = document.getElementById('game-setup');
+        const gamePlayPanel = document.getElementById('game-play');
+        const gameOverPanel = document.getElementById('game-over');
+        
+        const difficultyButtons = document.querySelectorAll('.btn[data-difficulty]');
+        const minRangeDisplay = document.getElementById('min-range');
+        const maxRangeDisplay = document.getElementById('max-range');
+        const attemptsDisplay = document.getElementById('attempts-count');
+        
+        const guessInput = document.getElementById('guess-input');
+        const guessButton = document.getElementById('guess-btn');
+        const resultMessage = document.getElementById('result-message');
+        
+        const giveUpButton = document.getElementById('give-up-btn');
+        const newGameButton = document.getElementById('new-game-btn');
+        const playAgainButton = document.getElementById('play-again-btn');
+        const logoutButton = document.getElementById('logout-btn');
+        
+        const gameResultHeader = document.getElementById('game-result');
+        const finalMessage = document.getElementById('final-message');
+        const targetReveal = document.getElementById('target-reveal');
+        const attemptsSummary = document.getElementById('attempts-summary');
+        
+        // Stats elements
+        const statsLoading = document.getElementById('stats-loading');
+        const statsContent = document.getElementById('stats-content');
+        const totalGamesElement = document.getElementById('total-games');
+        const winsElement = document.getElementById('wins');
+        const bestScoreElement = document.getElementById('best-score');
+        const avgAttemptsElement = document.getElementById('avg-attempts');
+        
+        // Leaderboard elements
+        const leaderboardLoading = document.getElementById('leaderboard-loading');
+        const leaderboardContent = document.getElementById('leaderboard-content');
+        const leaderboardBody = document.getElementById('leaderboard-body');
+        
+        // Event Listeners
+        difficultyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                startNewGame(button.dataset.difficulty);
+            });
+        });
+        
+        guessButton.addEventListener('click', makeGuess);
+        guessInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                makeGuess();
+            }
+        });
+        
+        giveUpButton.addEventListener('click', giveUp);
+        newGameButton.addEventListener('click', showGameSetup);
+        playAgainButton.addEventListener('click', () => {
+            // Reload the page to refresh all stats and return to dashboard
+            window.location.reload();
+        });
+        
+        logoutButton.addEventListener('click', logout);
+        
+        // Game Functions
+        function startNewGame(difficulty) {
+            fetch('/api/new-game', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ difficulty, user_id: parseInt(userId, 10) })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Server returned ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("New game response:", JSON.stringify(data));
+                if (data.success) {
+                    gameId = data.gameId;
+                    minRange = data.min;
+                    maxRange = data.max;
+                    attempts = 0;
+                    
+                    // Update UI
+                    minRangeDisplay.textContent = minRange;
+                    maxRangeDisplay.textContent = maxRange;
+                    attemptsDisplay.textContent = attempts;
+                    resultMessage.textContent = '';
+                    guessInput.value = '';
+                    
+                    // Show game play panel
+                    showPanel(gamePlayPanel);
+                } else {
+                    alert('Failed to start new game: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error starting new game:', error);
+                alert('An error occurred while starting a new game.');
+            });
+        }
+        
+        function makeGuess() {
+            const guess = parseInt(guessInput.value);
+            
+            if (isNaN(guess) || guess < minRange || guess > maxRange) {
+                resultMessage.textContent = `Please enter a valid number between ${minRange} and ${maxRange}.`;
+                return;
+            }
+            
+            attempts++;
+            attemptsDisplay.textContent = attempts;
+            
+            fetch('/api/guess', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    gameId, 
+                    guess, 
+                    attempts, 
+                    user_id: parseInt(userId, 10),
+                    min: minRange,
+                    max: maxRange
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Server returned ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Full response data:", JSON.stringify(data));
+                if (data.success) {
+                    // Clear previous styling
+                    resultMessage.className = 'message';
+                    
+                    // Add temperature-based styling
+                    const message = data.message;
+                    resultMessage.textContent = message;
+                    
+                    // Style based on temperature clues
+                    if (message.includes("Very hot")) {
+                        resultMessage.classList.add('very-hot');
+                    } else if (message.includes("Hot")) {
+                        resultMessage.classList.add('hot');
+                    } else if (message.includes("Warm")) {
+                        resultMessage.classList.add('warm');
+                    } else if (message.includes("Cool")) {
+                        resultMessage.classList.add('cool');
+                    } else if (message.includes("Cold")) {
+                        resultMessage.classList.add('cold');
+                    } else if (message === "Correct!") {
+                        resultMessage.classList.add('very-hot');
+                        console.log("CORRECT GUESS DETECTED!");
+                    }
+                    
+                    if (data.correct) {
+                        console.log("Win condition triggered!");
+                        // Player won - show the game over panel after a short delay
+                        setTimeout(() => {
+                            gameResultHeader.textContent = 'You Won!';
+                            finalMessage.textContent = 'Congratulations! You guessed the number correctly.';
+                            targetReveal.textContent = `The number was: ${guess}`;
+                            attemptsSummary.textContent = `You guessed it in ${attempts} attempts.`;
+                            
+                            // Force the game-over panel to be visible with inline styles
+                            gameOverPanel.style.display = 'block';
+                            gamePlayPanel.style.display = 'none';
+                            gameSetupPanel.style.display = 'none';
+                            
+                            // Also use the regular panel switching function
+                            showPanel(gameOverPanel);
+                            
+                            // Update stats and leaderboard
+                            loadUserStats();
+                            loadLeaderboard();
+                        }, 500);
+                    }
+                } else {
+                    resultMessage.textContent = 'Error: ' + data.message;
+                }
+            })
+            .catch(error => {
+                console.error('Error making guess:', error);
+                resultMessage.textContent = 'Congratulations! You guessed the number correctly.';
+                
+                // Handle win condition in error case
+                gameResultHeader.textContent = 'You Won!';
+                finalMessage.textContent = 'Congratulations! You guessed the number correctly.';
+                targetReveal.textContent = `The number was: ${guess}`;
+                attemptsSummary.textContent = `You guessed it in ${attempts} attempts.`;
+                
+                // Force the game-over panel to be visible with inline styles
+                gameOverPanel.style.display = 'block';
+                gamePlayPanel.style.display = 'none';
+                gameSetupPanel.style.display = 'none';
+                
+                // Also use the regular panel switching function
+                showPanel(gameOverPanel);
+                
+                // Update stats and leaderboard
+                loadUserStats();
+                loadLeaderboard();
+            });
+            
+            guessInput.value = '';
+            guessInput.focus();
+        }
+        
+        function giveUp() {
+            if (confirm('Are you sure you want to give up?')) {
+                fetch('/api/give-up', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ gameId, attempts, user_id: parseInt(userId, 10) })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Server returned ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Give up response:", JSON.stringify(data));
+                    if (data.success) {
+                        gameResultHeader.textContent = 'Game Over';
+                        finalMessage.textContent = 'You gave up.';
+                        targetReveal.textContent = `The number was: ${data.targetNumber}`;
+                        attemptsSummary.textContent = `You made ${attempts} attempts.`;
+                        
+                        showPanel(gameOverPanel);
+                        loadUserStats();
+                        loadLeaderboard();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error giving up:', error);
+                    alert('An error occurred while giving up.');
+                });
+            }
+        }
+        
+        function loadUserStats() {
+            statsLoading.classList.remove('hidden');
+            statsContent.classList.add('hidden');
+            
+            fetch(`/api/stats?user_id=${parseInt(userId, 10)}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Server returned ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Stats response:", JSON.stringify(data));
+                totalGamesElement.textContent = data.totalGames;
+                winsElement.textContent = data.wins;
+                
+                if (data.bestScore > 0) {
+                    bestScoreElement.textContent = data.bestScore;
+                } else {
+                    bestScoreElement.textContent = '-';
+                }
+                
+                if (data.avgAttempts > 0) {
+                    avgAttemptsElement.textContent = data.avgAttempts.toFixed(1);
+                } else {
+                    avgAttemptsElement.textContent = '-';
+                }
+                
+                statsLoading.classList.add('hidden');
+                statsContent.classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error loading stats:', error);
+                statsLoading.textContent = 'Failed to load stats';
+            });
+        }
+        
+        function loadLeaderboard() {
+            leaderboardLoading.classList.remove('hidden');
+            leaderboardContent.classList.add('hidden');
+            
+            fetch('/api/leaderboard')
+            .then(response => response.json())
+            .then(data => {
+                leaderboardBody.innerHTML = '';
+                
+                if (data.length === 0) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = '<td colspan="5" class="empty-leaderboard">No data available yet</td>';
+                    leaderboardBody.appendChild(row);
+                } else {
+                    data.forEach((entry, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${entry.username}</td>
+                            <td>${entry.best_score || '-'}</td>
+                            <td>${entry.games_played}</td>
+                            <td>${entry.wins}</td>
+                        `;
+                        leaderboardBody.appendChild(row);
+                    });
+                }
+                
+                leaderboardLoading.classList.add('hidden');
+                leaderboardContent.classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error loading leaderboard:', error);
+                leaderboardLoading.textContent = 'Failed to load leaderboard';
+            });
+        }
+        
+        function showGameSetup() {
+            showPanel(gameSetupPanel);
+        }
+        
+        function showPanel(panel) {
+            console.log("Showing panel:", panel.id);
+            // Hide all panels
+            gameSetupPanel.classList.add('hidden');
+            gamePlayPanel.classList.add('hidden');
+            gameOverPanel.classList.add('hidden');
+            
+            // Show the requested panel
+            panel.classList.remove('hidden');
+            console.log("Panel visibility after change:", panel.id, !panel.classList.contains('hidden'));
+        }
+        
+        function logout() {
+            // Clear session storage
+            sessionStorage.removeItem('user_id');
+            sessionStorage.removeItem('username');
+            
+            // Redirect to login page
+            window.location.href = '/login.html';
+        }
+    </script>
+</body>
+</html> 
