@@ -77,11 +77,13 @@ Then open your web browser and navigate to: http://localhost:8080
 5. Try to guess the number in as few attempts as possible
 6. View your game statistics at the bottom of the page
 
-<img width="1440" alt="Image5" src="https://github.com/user-attachments/assets/70839271-6239-4e3f-b63d-b7be506319bd" />
-<img width="1440" alt="Image4" src="https://github.com/user-attachments/assets/56b1a35d-974c-475e-8259-49af5a9cffda" />
-<img width="1440" alt="Image3" src="https://github.com/user-attachments/assets/a603a213-bda9-4167-b5a1-1ad51eead56f" />
-<img width="1440" alt="Image2" src="https://github.com/user-attachments/assets/298db62d-d9a9-42de-9b39-2bedc4c5b072" />
-<img width="1440" alt="Image1" src="https://github.com/user-attachments/assets/71257b9a-2c5d-48d2-a00b-06d28acd2dac" />
+
+<img width="1440" alt="Image4" src="https://github.com/user-attachments/assets/405d9428-1c05-4239-9759-c142964a2d21" />
+<img width="1440" alt="Image1" src="https://github.com/user-attachments/assets/be941b5e-e481-404a-ba59-0e83339056d0" />
+<img width="1440" alt="Image2" src="https://github.com/user-attachments/assets/90a7322f-6827-4add-b6c2-1eda65e0177e" />
+<img width="1440" alt="Image3" src="https://github.com/user-attachments/assets/e74050b1-4f58-459c-8c64-8bca7d84b15f" />
+<img width="1440" alt="Image5" src="https://github.com/user-attachments/assets/e453b77c-5295-40bf-a957-fbe16d969fac" />
+
 
 
 
